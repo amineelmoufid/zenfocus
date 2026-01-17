@@ -1,0 +1,5 @@
+{
+  "name": "ZenFocus",
+  "description": "A minimalist focus application with a visual weekly timeline and immersive full-screen countdown timer to track your productivity.",
+  "requestFramePermissions": []
+}
