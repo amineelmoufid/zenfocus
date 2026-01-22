@@ -8,23 +8,21 @@ interface DashboardProps {
   sessions: FocusSession[];
   blocks: FocusBlock[];
   onStartFocus: (label: string, minutes: number) => void;
-  onAddBlock: (startTime: number, label: string) => void;
+  onAddBlock: (startTime: number, label: string, id?: string) => void;
+  onDeleteBlock: (id: string) => void;
   activePlannedBlock: FocusBlock | null;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ sessions, blocks, onStartFocus, onAddBlock, activePlannedBlock }) => {
-  // Initialize from localStorage or default
+export const Dashboard: React.FC<DashboardProps> = ({ sessions, blocks, onStartFocus, onAddBlock, onDeleteBlock, activePlannedBlock }) => {
   const [label, setLabel] = useState(() => {
     return localStorage.getItem('zenfocus_last_label') || 'Deep Work';
   });
   const [minutes, setMinutes] = useState(60);
 
-  // Update localStorage when label changes
   useEffect(() => {
     localStorage.setItem('zenfocus_last_label', label);
   }, [label]);
 
-  // If a planned block starts, suggest its label
   useEffect(() => {
     if (activePlannedBlock) {
       setLabel(activePlannedBlock.label);
@@ -37,7 +35,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ sessions, blocks, onStartF
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-12">
-      {/* Planned Session Notification Banner */}
       {activePlannedBlock && (
         <div className="mb-8 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl p-4 flex items-center justify-between animate-in fade-in slide-in-from-top duration-500">
           <div className="flex items-center gap-4">
@@ -101,29 +98,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ sessions, blocks, onStartF
         </div>
       </header>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <StatCard 
-          icon={<Clock className="text-indigo-400" />} 
-          label="Total Focus" 
-          value={`${totalHours}h`} 
-          subValue={`${totalMinutes} mins`} 
-        />
-        <StatCard 
-          icon={<Target className="text-emerald-400" />} 
-          label="Sessions" 
-          value={sessionCount.toString()} 
-          subValue="Completed" 
-        />
-        <StatCard 
-          icon={<Flame className="text-orange-400" />} 
-          label="Daily Streak" 
-          value="4" 
-          subValue="Keep it up!" 
-        />
+        <StatCard icon={<Clock className="text-indigo-400" />} label="Total Focus" value={`${totalHours}h`} subValue={`${totalMinutes} mins`} />
+        <StatCard icon={<Target className="text-emerald-400" />} label="Sessions" value={sessionCount.toString()} subValue="Completed" />
+        <StatCard icon={<Flame className="text-orange-400" />} label="Daily Streak" value="4" subValue="Keep it up!" />
       </div>
 
-      {/* Timeline Section */}
       <section className="bg-neutral-900/40 border border-neutral-800 rounded-3xl p-8 backdrop-blur-sm">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -131,17 +111,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ sessions, blocks, onStartF
             <p className="text-xs text-neutral-500 mt-1 italic">Click any slot in the current or future hours to block time</p>
           </div>
           <div className="flex gap-4 text-[10px] text-neutral-500 uppercase font-bold tracking-widest">
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 bg-indigo-500 rounded-sm"></div>
-              <span>Session</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 border border-dashed border-indigo-400/50 rounded-sm"></div>
-              <span>Blocked</span>
-            </div>
+            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 bg-indigo-500 rounded-sm"></div><span>Session</span></div>
+            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 border border-dashed border-indigo-400/50 rounded-sm"></div><span>Blocked</span></div>
           </div>
         </div>
-        <WeeklyTimeline sessions={sessions} blocks={blocks} onAddBlock={onAddBlock} />
+        <WeeklyTimeline 
+          sessions={sessions} 
+          blocks={blocks} 
+          onAddBlock={onAddBlock} 
+          onDeleteBlock={onDeleteBlock}
+        />
       </section>
 
       <footer className="mt-16 text-center text-neutral-600 text-sm">

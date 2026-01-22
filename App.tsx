@@ -4,7 +4,7 @@ import { Dashboard } from './components/Dashboard';
 import { FullscreenTimer } from './components/FullscreenTimer';
 import { FocusSession, FocusBlock, ViewState } from './types';
 import { db } from './firebase';
-import { ref, onValue, set, push } from 'firebase/database';
+import { ref, onValue, set, push, remove } from 'firebase/database';
 
 const App: React.FC = () => {
   const [view, setView] = useState<ViewState>('dashboard');
@@ -56,17 +56,13 @@ const App: React.FC = () => {
       
       if (currentBlock && (!activePlannedBlock || activePlannedBlock.id !== currentBlock.id)) {
         setActivePlannedBlock(currentBlock);
-        // Only alert if we're not currently in focus mode
-        if (view === 'dashboard' && !isActive) {
-           // We could use Browser Notifications here, but an in-app banner is safer/cleaner
-        }
       } else if (!currentBlock && activePlannedBlock) {
         setActivePlannedBlock(null);
       }
-    }, 10000);
+    }, 5000);
 
     return () => clearInterval(interval);
-  }, [blocks, activePlannedBlock, view, isActive]);
+  }, [blocks, activePlannedBlock]);
 
   // Timer logic
   useEffect(() => {
@@ -133,18 +129,23 @@ const App: React.FC = () => {
     setIsActive(false);
     setView('dashboard');
     setCurrentSessionStart(null);
-    alert("Focus session completed! Great work.");
   };
 
-  const handleAddBlock = (startTime: number, label: string) => {
-    const blockRef = push(ref(db, 'blocks'));
+  const handleAddBlock = (startTime: number, label: string, existingId?: string) => {
+    const blockId = existingId || push(ref(db, 'blocks')).key || Math.random().toString(36).substr(2, 9);
+    const blockRef = ref(db, `blocks/${blockId}`);
     const newBlock: FocusBlock = {
-      id: blockRef.key || Math.random().toString(36).substr(2, 9),
+      id: blockId,
       startTime,
       endTime: startTime + (60 * 60 * 1000), // Default 1 hour block
       label
     };
     set(blockRef, newBlock);
+  };
+
+  const handleDeleteBlock = (id: string) => {
+    const blockRef = ref(db, `blocks/${id}`);
+    remove(blockRef);
   };
 
   return (
@@ -155,6 +156,7 @@ const App: React.FC = () => {
           blocks={blocks}
           onStartFocus={startFocus} 
           onAddBlock={handleAddBlock}
+          onDeleteBlock={handleDeleteBlock}
           activePlannedBlock={activePlannedBlock}
         />
       ) : (
